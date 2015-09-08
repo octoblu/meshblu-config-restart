@@ -1,4 +1,4 @@
-meshblu  = require 'meshblu'
+MeshbluWebsocket  = require 'meshblu-websocket'
 {EventEmitter} = require 'events'
 {Plugin} = require './index'
 
@@ -7,18 +7,16 @@ class Connector extends EventEmitter
     process.on 'uncaughtException', @emitError
 
   createConnection: =>
-    @conx = meshblu.createConnection
-      server : @config.server
-      port   : @config.port
-      uuid   : @config.uuid
-      token  : @config.token
+    @meshblu = new MeshbluWebsocket @config
+    @meshblu.connect =>
+      @meshblu.subscribe @config.uuid
 
-    @conx.on 'notReady', @emitError
-    @conx.on 'error', @emitError
+    @meshblu.on 'notReady', @emitError
+    @meshblu.on 'error', @emitError
 
-    @conx.on 'ready', @onReady
-    @conx.on 'message', @onMessage
-    @conx.on 'config', @onConfig
+    @meshblu.on 'ready', @onReady
+    @meshblu.on 'message', @onMessage
+    @meshblu.on 'config', @onConfig
 
   onConfig: (device) =>
     @emit 'config', device
@@ -35,9 +33,9 @@ class Connector extends EventEmitter
       @emitError error
 
   onReady: =>
-    @conx.whoami uuid: @config.uuid, (device) =>
+    @meshblu.whoami uuid: @config.uuid, (device) =>
       @plugin.setOptions device.options
-      @conx.update
+      @meshblu.update
         uuid:          @config.uuid,
         token:         @config.token,
         messageSchema: @plugin.messageSchema,
@@ -49,13 +47,13 @@ class Connector extends EventEmitter
     @createConnection()
     @plugin.on 'data', (data) =>
       @emit 'data.send', data
-      @conx.data data
+      @meshblu.data data
 
     @plugin.on 'error', @emitError
 
     @plugin.on 'message', (message) =>
       @emit 'message.send', message
-      @conx.message message
+      @meshblu.message message
 
   emitError: (error) =>
     @emit 'error', error
