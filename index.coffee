@@ -9,8 +9,8 @@ class Plugin extends EventEmitter
     @key = process.env.CONFIG_RESTART_KEY
 
   restart: =>
-    @process?.kill('SIGKILL')
-    @process = spawn 'npm', ['start'], stdio: 'inherit'
+    @process?.kill 'SIGKILL'
+    @process = spawn 'node', ['command.js'], stdio: 'inherit'
 
   onMessage: =>
     debug 'onMessage'
