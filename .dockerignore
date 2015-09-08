@@ -1,0 +1,6 @@
+.git
+.aws
+.kubernetes
+.systemd
+node_modules
+meshblu.json

@@ -7,9 +7,9 @@ class Connector extends EventEmitter
     process.on 'uncaughtException', @emitError
 
   createConnection: =>
+    @config.protocol ?= 'http' unless @config.port == 443
     @meshblu = new MeshbluWebsocket @config
-    @meshblu.connect =>
-      @meshblu.subscribe @config.uuid
+    @meshblu.connect()
 
     @meshblu.on 'notReady', @emitError
     @meshblu.on 'error', @emitError
@@ -33,14 +33,9 @@ class Connector extends EventEmitter
       @emitError error
 
   onReady: =>
-    @meshblu.whoami uuid: @config.uuid, (device) =>
-      @plugin.setOptions device.options
-      @meshblu.update
-        uuid:          @config.uuid,
-        token:         @config.token,
-        messageSchema: @plugin.messageSchema,
-        optionsSchema: @plugin.optionsSchema,
-        options:       @plugin.options
+    @meshblu.whoami uuid: @config.uuid
+    @meshblu.on 'whoami', (device) =>
+      @plugin.setOptions device
 
   run: =>
     @plugin = new Plugin();
@@ -54,6 +49,8 @@ class Connector extends EventEmitter
     @plugin.on 'message', (message) =>
       @emit 'message.send', message
       @meshblu.message message
+
+    @plugin.restart()
 
   emitError: (error) =>
     @emit 'error', error

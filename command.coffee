@@ -1,7 +1,8 @@
-config = require './meshblu.json'
+MeshbluConfig = require 'meshblu-config'
 Connector = require './connector'
 
-connector = new Connector config
+config = new MeshbluConfig
+connector = new Connector config.toJSON()
 
 connector.on 'error', (error) ->
   console.error error

@@ -1,46 +1,35 @@
-'use strict';
-util           = require 'util'
 {EventEmitter} = require 'events'
 debug          = require('debug')('meshblu-config-restart')
-
-MESSAGE_SCHEMA =
-  type: 'object'
-  properties:
-    exampleBoolean:
-      type: 'boolean'
-      required: true
-    exampleString:
-      type: 'string'
-      required: true
-
-OPTIONS_SCHEMA =
-  type: 'object'
-  properties:
-    firstExampleOption:
-      type: 'string'
-      required: true
+XXHash         = require 'xxhash'
+{spawn}        = require 'child_process'
 
 class Plugin extends EventEmitter
   constructor: ->
     @options = {}
-    @messageSchema = MESSAGE_SCHEMA
-    @optionsSchema = OPTIONS_SCHEMA
+    @key = process.env.CONFIG_RESTART_KEY
 
-  onMessage: (message) =>
-    payload = message.payload;
-    response =
-      devices: ['*']
-      topic: 'echo'
-      payload: payload
-    this.emit 'message', response
+  restart: =>
+    @process?.kill('SIGKILL')
+    @process = spawn 'npm', ['start'], stdio: 'inherit'
+
+  onMessage: =>
+    debug 'onMessage'
 
   onConfig: (device) =>
-    @setOptions device.options
+    debug 'onConfig'
+
+    @restart() unless @lastHash == @generateHash device[@key]
+    @setOptions device
 
   setOptions: (options={}) =>
+    debug 'setOptions'
     @options = options
 
+    @lastHash = @generateHash options[@key]
+
+  generateHash: (value=null) =>
+    buffer = new Buffer JSON.stringify value
+    XXHash.hash buffer, 0
+
 module.exports =
-  messageSchema: MESSAGE_SCHEMA
-  optionsSchema: OPTIONS_SCHEMA
   Plugin: Plugin

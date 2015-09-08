@@ -10,7 +10,10 @@
   },
   "dependencies": {
     "coffee-script": "^1.9.0",
-    "debug": "^2.1.0"
+    "debug": "^2.1.0",
+    "meshblu-config": "^3.1.0",
+    "meshblu-websocket": "^2.0.4",
+    "xxhash": "^0.2.2"
   },
   "bundledDependencies": [
     "request",
