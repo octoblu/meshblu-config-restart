@@ -1,22 +1,27 @@
 MeshbluWebsocket  = require 'meshblu-websocket'
 {EventEmitter} = require 'events'
 {Plugin} = require './index'
+debug          = require('debug')('meshblu-config-restart')
+Backoff = require 'backo'
 
 class Connector extends EventEmitter
   constructor: (@config={}) ->
     process.on 'uncaughtException', @emitError
+    @backoff = new Backoff min: 1000, max: 60 * 60 * 1000
 
   createConnection: =>
     @config.protocol ?= 'http' unless @config.port == 443
+    @config.pingTimeout = 30000
     @meshblu = new MeshbluWebsocket @config
     @meshblu.connect()
 
     @meshblu.on 'notReady', @emitError
-    @meshblu.on 'error', @emitError
+    @meshblu.on 'error', @onError
 
     @meshblu.on 'ready', @onReady
     @meshblu.on 'message', @onMessage
     @meshblu.on 'config', @onConfig
+    @meshblu.on 'close', @reconnect
 
   onConfig: (device) =>
     @emit 'config', device
@@ -24,6 +29,12 @@ class Connector extends EventEmitter
       @plugin.onConfig arguments...
     catch error
       @emitError error
+
+  onError: =>
+    randomNumber = Math.random() * 5
+    reconnectTimeout = @backoff.duration() * randomNumber
+    debug "reconnecting in #{reconnectTimeout}ms"
+    setTimeout @reconnect, reconnectTimeout
 
   onMessage: (message) =>
     @emit 'message.recieve', message
@@ -36,6 +47,10 @@ class Connector extends EventEmitter
     @meshblu.whoami uuid: @config.uuid
     @meshblu.on 'whoami', (device) =>
       @plugin.setOptions device
+
+  reconnect: =>
+    debug 'reconnect'
+    @meshblu.reconnect()
 
   run: =>
     @plugin = new Plugin();

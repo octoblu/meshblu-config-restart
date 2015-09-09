@@ -1,7 +1,7 @@
 {
   "name": "meshblu-config-restart",
   "repository": "octoblu/meshblu-config-restart",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "main": "connector.js",
   "scripts": {
     "preinstall": "node -e \"try{require('./skip-install.js')}catch(e){}\"",
@@ -9,10 +9,11 @@
     "test": "exit 0"
   },
   "dependencies": {
+    "backo": "^1.1.0",
     "coffee-script": "^1.9.0",
     "debug": "^2.1.0",
     "meshblu-config": "^3.1.0",
-    "meshblu-websocket": "^2.0.4",
+    "meshblu-websocket": "^2.2.0",
     "xxhash": "^0.2.2"
   },
   "bundledDependencies": [
