@@ -21,7 +21,7 @@ class Connector extends EventEmitter
     @meshblu.on 'ready', @onReady
     @meshblu.on 'message', @onMessage
     @meshblu.on 'config', @onConfig
-    @meshblu.on 'close', @reconnect
+    @meshblu.on 'close', @reconnectWithBackoff
 
   onConfig: (device) =>
     @emit 'config', device
@@ -30,11 +30,9 @@ class Connector extends EventEmitter
     catch error
       @emitError error
 
-  onError: =>
-    randomNumber = Math.random() * 5
-    reconnectTimeout = @backoff.duration() * randomNumber
-    debug "reconnecting in #{reconnectTimeout}ms"
-    setTimeout @reconnect, reconnectTimeout
+  onError: (error) =>
+    console.error error.message
+    @reconnectWithBackoff()
 
   onMessage: (message) =>
     @emit 'message.recieve', message
@@ -47,6 +45,12 @@ class Connector extends EventEmitter
     @meshblu.whoami uuid: @config.uuid
     @meshblu.on 'whoami', (device) =>
       @plugin.setOptions device
+
+  reconnectWithBackoff: =>
+    randomNumber = Math.random() * 5
+    reconnectTimeout = @backoff.duration() * randomNumber
+    debug "reconnecting in #{reconnectTimeout}ms"
+    setTimeout @reconnect, reconnectTimeout
 
   reconnect: =>
     debug 'reconnect'
