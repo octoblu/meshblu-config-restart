@@ -11,6 +11,9 @@ class Plugin extends EventEmitter
   restart: =>
     @process?.kill 'SIGKILL'
     @process = spawn 'node', ['command.js'], stdio: 'inherit'
+    @process.on 'exit', (code, signal) =>
+      console.log 'process exited', code, signal
+      process.exit code unless signal == 'SIGKILL'
 
   onMessage: =>
     debug 'onMessage'
